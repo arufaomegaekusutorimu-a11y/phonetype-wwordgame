@@ -756,6 +756,7 @@
         function updateCount() { countDisplay.innerText = `${grid.querySelectorAll('.collected-word').length} / ${maxCapacity}`; }
 
         function updateGame() {
+            updateShopStatus(); // ここに追加：常にポイントを確認してボタンの状態を更新する
             const currentItems = belt.getElementsByClassName('word-container');
             if (currentItems.length === 0) createWordObject();
             else if (parseFloat(currentItems[currentItems.length - 1].style.left) <= window.innerWidth - WORD_SPACING) createWordObject();
