@@ -23,14 +23,12 @@
             align-items: center;
             margin: 0;
             height: 100vh;
-            /* スマホでのスクロールを制御 */
             overflow-x: hidden;
             overflow-y: auto;
             user-select: none;
             transition: background 0.5s ease;
         }
 
-        /* タイトル画面のスタイル - スマホ最適化 */
         #title-screen {
             position: fixed;
             top: 0;
@@ -49,14 +47,14 @@
 
         .title-container {
             display: flex;
-            flex-direction: column; /* 縦並びに */
+            flex-direction: column;
             align-items: center;
             gap: 15px;
             margin-bottom: 40px;
         }
 
         .main-title {
-            font-size: 2.5rem; /* スマホサイズ */
+            font-size: 2.5rem;
             font-weight: bold;
             text-shadow: 0 0 15px var(--neon-blue);
             letter-spacing: 4px;
@@ -87,10 +85,9 @@
             transition: 0.3s;
         }
 
-        /* メインコンテンツのスマホ調整 */
         #main-content-wrapper {
             width: 100%;
-            max-width: 500px; /* スマホの幅に制限 */
+            max-width: 500px;
             padding: 10px;
             box-sizing: border-box;
             opacity: 0;
@@ -188,7 +185,7 @@
 
         #conveyor-belt {
             width: 100%;
-            height: 120px; /* スマホ用に少し低く */
+            height: 120px;
             background: rgba(0, 242, 255, 0.05);
             position: relative;
             overflow: hidden;
@@ -216,7 +213,7 @@
 
         .collection-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3列固定がスマホで見やすい */
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
 
@@ -226,17 +223,28 @@
             height: auto;
             border: 1px solid rgba(0, 242, 255, 0.2);
             font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .collected-word .word-text { font-size: 0.75rem; }
         
-        #sell-zone, .dict-sell-zone {
+        /* 売却・戻すボタンのスマホ最適化スタイル */
+        .op-btn {
             width: 95%;
-            padding: 15px;
-            margin-top: 10px;
+            padding: 12px;
+            margin: 10px 0;
             font-size: 0.9rem;
-            margin-bottom: 30px; /* 下部に余裕を */
+            font-weight: bold;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: none; /* 選択中のみ表示 */
         }
+
+        #sell-btn-main, #sell-btn-dict { background: rgba(255, 77, 77, 0.8); color: white; border: 1px solid #ff4d4d; }
+        #return-btn-dict { background: rgba(0, 242, 255, 0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue); }
 
         /* その他の既存スタイル維持 */
         body.dark-event-active { background: #050505 !important; }
@@ -263,9 +271,6 @@
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
         .collected-word { width: 100%; height: 100%; padding: 5px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
         .collected-word.selected { border: 2px solid #00f2ff !important; box-shadow: 0 0 10px #00f2ff; }
-        .dragging { opacity: 0.5; }
-        #sell-zone, .dict-sell-zone { border: 2px solid #ff4d4d; border-radius: 15px; background: rgba(255, 77, 77, 0.1); text-align: center; color: #ff4d4d; font-weight: bold; }
-        #return-zone { width: 100%; height: 40px; margin: 10px 0; border: 2px solid var(--neon-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--neon-blue); font-size: 0.7rem; background: rgba(0, 242, 255, 0.05); }
         #combine-btn { background: var(--neon-pink); color: white; display: none; }
         #shop-btn { background: var(--neon-gold); color: black; }
         #shop-btn:disabled { background: #555; color: #888; }
@@ -317,17 +322,12 @@
             <div class="dict-nav"><span class="nav-arrow" id="prev-page" onclick="changePage(-1)">＜</span><span id="page-display">1 / 1</span><span class="nav-arrow" id="next-page" onclick="changePage(1)">＞</span></div>
             <span class="close-modal" onclick="closeModal('modal-dictionary')">&times;</span>
         </div>
-        <div class="modal-body">
-            <p style="font-size: 0.7rem; color: #aaa; margin: 0;">枠をタップで基地から移動</p>
+        <div class="modal-body" style="text-align: center;">
+            <p style="font-size: 0.7rem; color: #aaa; margin: 0 0 10px 0;">単語をタップして選択</p>
             <div id="dictionary-grid" class="collection-grid"></div>
-            <div id="return-zone">🛸 ここにドラッグして基地に戻す</div>
-            <div class="dict-sell-zone" id="dict-sell-zone">🗑️ ここにドラッグして売却</div>
+            <button id="return-btn-dict" class="op-btn" onclick="returnSelectedToMain()">🛸 基地に戻す</button>
+            <button id="sell-btn-dict" class="op-btn" onclick="sellSelectedWord()">🗑️ 選択した単語を売却</button>
         </div>
-    </div>
-
-    <div id="modal-select-word" class="modal">
-        <div class="modal-header"><span>移動する単語を選択</span><span class="close-modal" onclick="closeModal('modal-select-word')">&times;</span></div>
-        <div class="modal-body" id="select-word-list"></div>
     </div>
 
     <div id="modal-shop" class="modal">
@@ -376,13 +376,6 @@
         </div>
     </div>
 
-    <div id="modal-fusion-choice" class="modal">
-        <div class="modal-header"><span>色を選択</span></div>
-        <div class="modal-body">
-            <div id="fusion-options-container" style="display:flex; gap:10px; justify-content:center; padding:10px;"></div>
-        </div>
-    </div>
-
     <div id="main-content-wrapper">
         <h1>🌌 WORD COLLECTOR</h1>
         
@@ -403,11 +396,10 @@
             <div id="collection-grid" class="collection-grid"></div>
         </div>
 
-        <div id="sell-zone">🗑️ ここに売却</div>
+        <button id="sell-btn-main" class="op-btn" onclick="sellSelectedWord()">🗑️ 選択した単語を売却</button>
     </div>
 
     <script>
-        // --- 内部ロジックは変更なし ---
         const bgm = new Audio('bgm.mp3'); bgm.loop = true;
         const buySe = new Audio('buy.mp3'); const sellSe = new Audio('sell.mp3');
 
@@ -428,7 +420,6 @@
             }, 800);
         }
 
-        const panel = document.getElementById('collection-panel');
         const belt = document.getElementById('conveyor-belt');
         const grid = document.getElementById('collection-grid');
         const dictGrid = document.getElementById('dictionary-grid');
@@ -436,20 +427,14 @@
         const pointsDisplay = document.getElementById('total-points');
         const combineBtn = document.getElementById('combine-btn');
         const shopBtn = document.getElementById('shop-btn');
-        const sellZone = document.getElementById('sell-zone');
-        const dictSellZone = document.getElementById('dict-sell-zone');
         const feverDisplay = document.getElementById('fever-timer');
         const eventBanner = document.getElementById('event-banner');
         const pityDisplay = document.getElementById('pity-counter');
         const dictTitleInput = document.getElementById('dict-title');
-        const returnZone = document.getElementById('return-zone');
-        const mainWrapper = document.getElementById('main-content-wrapper');
-        const mainStars = document.getElementById('main-content-stars');
-        const mainMenu = document.getElementById('main-content-menu');
         
         const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉっゃゅょー";
-        let collectedWords = new Set();
-        let selectedElements = [];
+        let selectedElements = []; // 合体用
+        let activeSelect = null;   // 移動・売却用 (1つ選択)
         let totalPoints = 0;
         let maxCapacity = 10;
         let gachaCount = 0;
@@ -459,8 +444,8 @@
         let isFeverTime = false;
         let feverRemaining = 240;
         let isDarkEvent = false, isLoveEvent = false, isIceEvent = false, isForestEvent = false, isGodEvent = false;
-        let BELT_SPEED = 1.5; // スマホ用に少し落とす 
-        const WORD_SPACING = 250; // スマホ用に詰める
+        let BELT_SPEED = 1.5; 
+        const WORD_SPACING = 250;
 
         let passives = {
             speed: { level: 0, equipped: false, customSpeed: 1.5 },
@@ -530,12 +515,13 @@
         function deleteData() { if(confirm("削除しますか？")) { window.isDeleting = true; localStorage.removeItem('wordCollectorData'); location.reload(); } }
         function updatePityDisplay() { if (pityDisplay) pityDisplay.innerText = `レインボー確定まであと${10 - gachaCount}回`; }
         function openModal(id) { 
+            clearSelection();
             if (['modal-dictionary','modal-shop','modal-settings'].includes(id)) closeModal('modal-menu');
             document.getElementById(id).style.display = 'block'; 
             if (id === 'modal-shop') updatePassiveShop();
             if (id === 'modal-menu') updatePassiveEquip();
         }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; clearSelection(); }
         function updateVolume(type, val) { if (type === 'bgm') bgm.volume = val; if (type === 'se') { buySe.volume = val; sellSe.volume = val; } }
 
         function updatePassiveShop() {
@@ -690,30 +676,64 @@
             return word;
         }
 
+        // --- タップ移動・売却ロジック ---
         function createBaseSlot(type) {
-            const slot = document.createElement('div'); slot.className = 'word-slot' + (type === 'dict' ? ' dict-slot' : '');
-            slot.addEventListener('dragover', e => e.preventDefault());
-            slot.addEventListener('drop', e => {
-                e.preventDefault(); const draggingEl = document.querySelector('.dragging');
-                if (draggingEl) { if (slot.children.length > 0) draggingEl.parentElement.appendChild(slot.children[0]); slot.appendChild(draggingEl); updateCount(); saveData(); }
-            });
-            if (type === 'dict') slot.onclick = () => { if (slot.children.length === 0) openWordSelector(slot); };
+            const slot = document.createElement('div'); 
+            slot.className = 'word-slot' + (type === 'dict' ? ' dict-slot' : '');
+            slot.onclick = () => {
+                if (activeSelect) {
+                    const targetParent = activeSelect.parentElement;
+                    const existingWord = slot.children[0];
+                    if (existingWord) targetParent.appendChild(existingWord); // 入れ替え
+                    slot.appendChild(activeSelect);
+                    clearSelection();
+                    updateCount();
+                    saveData();
+                }
+            };
             return slot;
+        }
+
+        function clearSelection() {
+            if (activeSelect) activeSelect.classList.remove('selected');
+            activeSelect = null;
+            selectedElements = [];
+            combineBtn.style.display = 'none';
+            document.getElementById('sell-btn-main').style.display = 'none';
+            document.getElementById('sell-btn-dict').style.display = 'none';
+            document.getElementById('return-btn-dict').style.display = 'none';
+        }
+
+        function sellSelectedWord() {
+            if (activeSelect) {
+                totalPoints += parseInt(activeSelect.dataset.points);
+                pointsDisplay.innerText = formatPoints(totalPoints);
+                activeSelect.remove();
+                sellSe.play();
+                clearSelection();
+                updateCount();
+                saveData();
+            }
+        }
+
+        function returnSelectedToMain() {
+            if (activeSelect) {
+                const slots = grid.querySelectorAll('.word-slot');
+                for (let slot of slots) {
+                    if (slot.children.length === 0) {
+                        slot.appendChild(activeSelect);
+                        clearSelection();
+                        updateCount();
+                        saveData();
+                        return;
+                    }
+                }
+                alert("基地がいっぱいです！");
+            }
         }
 
         function initSlots() { grid.innerHTML = ''; for (let i = 0; i < maxCapacity; i++) grid.appendChild(createBaseSlot('base')); }
         function initDictSlots() { dictGrid.innerHTML = ''; for (let i = 0; i < 20; i++) dictGrid.appendChild(createBaseSlot('dict')); }
-
-        function openWordSelector(targetSlot) {
-            const list = document.getElementById('select-word-list'); list.innerHTML = '';
-            grid.querySelectorAll('.collected-word').forEach(wordEl => {
-                const btn = document.createElement('div'); btn.className = 'shop-item';
-                btn.innerHTML = `<span>${wordEl.querySelector('.word-text').innerText}</span><button class="menu-btn">移動</button>`;
-                btn.onclick = () => { targetSlot.appendChild(wordEl); closeModal('modal-select-word'); updateCurrentPageData(); renderDictPage(); updateCount(); saveData(); };
-                list.appendChild(btn);
-            });
-            openModal('modal-select-word');
-        }
 
         function createWordObject() {
             const container = document.createElement('div'); container.className = 'word-container';
@@ -738,12 +758,43 @@
         }
 
         function createWordElement(word, isFused, points, type) {
-            const item = document.createElement('div'); item.draggable = true; item.dataset.points = points; item.dataset.type = type;
-            item.className = `collected-word ${getRarityClass(word, type)}`; if (isFused) item.classList.add('is-fused');
+            const item = document.createElement('div'); 
+            item.dataset.points = points; item.dataset.type = type;
+            item.className = `collected-word ${getRarityClass(word, type)}`; 
+            if (isFused) item.classList.add('is-fused');
             item.innerHTML = `<span class="word-text">${word}</span><span style="font-size:0.5rem">${formatPoints(points)}P</span>`;
-            item.onclick = (e) => { e.stopPropagation(); toggleSelection(item, word); };
-            item.addEventListener('dragstart', () => item.classList.add('dragging'));
-            item.addEventListener('dragend', () => item.classList.remove('dragging'));
+            
+            item.onclick = (e) => {
+                e.stopPropagation();
+                const isDict = item.closest('#dictionary-grid');
+
+                if (activeSelect === item) {
+                    clearSelection();
+                } else if (activeSelect) {
+                    // 他の単語がある枠をタップした場合はcreateBaseSlot側のonclickで入れ替え処理される
+                } else {
+                    activeSelect = item;
+                    item.classList.add('selected');
+                    // 操作ボタン表示
+                    if (isDict) {
+                        document.getElementById('sell-btn-dict').style.display = 'block';
+                        document.getElementById('return-btn-dict').style.display = 'block';
+                    } else {
+                        document.getElementById('sell-btn-main').style.display = 'block';
+                        // 合体選択用ロジックも兼ねる
+                        selectedElements = [{ el: item, text: word, type: type }];
+                    }
+                }
+            };
+            
+            // 合体用の2つ目選択(基地のみ)
+            item.addEventListener('click', () => {
+                if (!item.closest('#dictionary-grid') && activeSelect && activeSelect !== item) {
+                    selectedElements = [{el: activeSelect, text: activeSelect.querySelector('.word-text').innerText, type: activeSelect.dataset.type}, {el: item, text: word, type: type}];
+                    combineBtn.style.display = 'block';
+                }
+            });
+
             return item;
         }
 
@@ -755,23 +806,10 @@
             updateCount();
         }
 
-        sellZone.addEventListener('dragover', e => e.preventDefault());
-        sellZone.addEventListener('drop', () => {
-            const drag = document.querySelector('.dragging');
-            if (drag) { totalPoints += parseInt(drag.dataset.points); pointsDisplay.innerText = formatPoints(totalPoints); drag.remove(); sellSe.play(); updateCount(); saveData(); }
-        });
-
-        function toggleSelection(element, word) {
-            if (element.parentElement.closest('#dictionary-grid')) return;
-            if (element.classList.contains('selected')) { element.classList.remove('selected'); selectedElements = selectedElements.filter(el => el.el !== element); }
-            else if (selectedElements.length < 2) { element.classList.add('selected'); selectedElements.push({ el: element, text: word, type: element.dataset.type }); }
-            combineBtn.style.display = selectedElements.length === 2 ? 'block' : 'none';
-        }
-
         combineBtn.onclick = () => {
             if (selectedElements.length === 2) {
                 const newWord = selectedElements[0].text + selectedElements[1].text;
-                if (newWord.length > 10) return;
+                if (newWord.length > 10) { alert("単語が長すぎます！"); return; }
                 finishFusion(newWord, selectedElements[0].type !== 'normal' ? selectedElements[0].type : selectedElements[1].type);
             }
         };
@@ -779,7 +817,7 @@
         function finishFusion(newWord, finalType) {
             selectedElements.forEach(item => item.el.remove());
             collectWord(newWord, true, null, finalType);
-            selectedElements = []; combineBtn.style.display = 'none'; saveData();
+            clearSelection(); saveData();
         }
 
         shopBtn.onclick = () => {
