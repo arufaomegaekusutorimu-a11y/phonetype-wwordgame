@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>単語コレクター - Cosmic Edition</title>
+    <style>
+        :root {
+            --space-bg: #0b0d17;
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff00de;
+            --neon-gold: #ffcc00;
+            --star-color: rgba(255, 255, 255, 0.8);
+            --panel-bg: rgba(0, 0, 0, 0.9);
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            /* スマホでのスクロールを制御 */
+            overflow-x: hidden;
+            overflow-y: auto;
+            user-select: none;
+            transition: background 0.5s ease;
+        }
+
+        /* タイトル画面のスタイル - スマホ最適化 */
+        #title-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1b2735 0%, #000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            transition: opacity 0.8s ease;
+            text-align: center;
+        }
+
+        .title-container {
+            display: flex;
+            flex-direction: column; /* 縦並びに */
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .main-title {
+            font-size: 2.5rem; /* スマホサイズ */
+            font-weight: bold;
+            text-shadow: 0 0 15px var(--neon-blue);
+            letter-spacing: 4px;
+            margin: 0;
+        }
+
+        .mascot-character {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            animation: float-mini 3s ease-in-out infinite;
+        }
+
+        @keyframes float-mini {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
+            color: white;
+            padding: 12px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+            transition: 0.3s;
+        }
+
+        /* メインコンテンツのスマホ調整 */
+        #main-content-wrapper {
+            width: 100%;
+            max-width: 500px; /* スマホの幅に制限 */
+            padding: 10px;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 1s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #main-content-menu, #main-content-stars {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, var(--star-color), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 150px 100px, var(--star-color), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 200px, var(--star-color), rgba(0,0,0,0));
+            background-size: 150px 150px;
+        }
+
+        .top-menu {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .menu-btn {
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid var(--neon-blue);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            flex: 1;
+            max-width: 100px;
+            text-align: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-height: 85vh;
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 15px;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .stats {
+            width: 95%;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 15px;
+            border: 1px solid var(--neon-blue);
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            font-size: 0.85rem;
+            gap: 5px;
+        }
+
+        .action-btns {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .action-btns button {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 8px;
+        }
+
+        #conveyor-belt {
+            width: 100%;
+            height: 120px; /* スマホ用に少し低く */
+            background: rgba(0, 242, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            border-top: 2px solid var(--neon-blue);
+            border-bottom: 2px solid var(--neon-blue);
+            margin-bottom: 15px;
+        }
+
+        .word-item {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+
+        #collection-panel {
+            width: 95%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 200px;
+            margin-bottom: 20px;
+        }
+
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3列固定がスマホで見やすい */
+            gap: 8px;
+        }
+
+        .word-slot {
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            height: auto;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            font-size: 0.7rem;
+        }
+
+        .collected-word .word-text { font-size: 0.75rem; }
+        
+        #sell-zone, .dict-sell-zone {
+            width: 95%;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 30px; /* 下部に余裕を */
+        }
+
+        /* その他の既存スタイル維持 */
+        body.dark-event-active { background: #050505 !important; }
+        body.love-event-active { background: radial-gradient(circle at center, #ffb6c1 0%, #8b4367 100%) !important; }
+        body.ice-event-active { background: radial-gradient(circle at center, #add8e6 0%, #4682b4 100%) !important; }
+        body.forest-event-active { background: radial-gradient(circle at center, #9ad44a 0%, #2d5a27 100%) !important; }
+        body.god-event-active { background: radial-gradient(circle at center, #ff3333 0%, #800000 100%) !important; }
+        body.fever-mode { background: radial-gradient(circle at center, #443300 0%, #000 100%) !important; --neon-blue: #ffd700; }
+        .points-display { color: var(--neon-gold); font-weight: bold; }
+        #fever-timer { min-width: 100px; text-align: center; }
+        .fever-active { color: var(--neon-pink); animation: pulse 0.5s infinite alternate; }
+        .word-container { position: absolute; height: 100%; display: flex; align-items: center; left: 100%; }
+        .rarity-dark { background: #000 !important; color: #fff !important; border: 1px solid #444; }
+        .rarity-love { background: #ffb6c1 !important; color: #000 !important; border: 1px solid #ff69b4; }
+        .rarity-ice { background: #add8e6 !important; color: #000 !important; border: 1px solid #00bfff; }
+        .rarity-forest { background: #9ad44a !important; color: #000 !important; border: 1px solid #2d5a27; }
+        .rarity-god, .rarity-rainbow { background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); background-size: 400% 400%; color: #000 !important; border: 1px solid #fff; animation: rainbow-bg 5s linear infinite, pulse 1.5s infinite alternate; }
+        .rarity-yellow { background: #ffff00; color: #000; border: 1px solid #ffd700; }
+        .rarity-red { background: #ff0000; border: 1px solid #b30000; }
+        .rarity-purple { background: #800080; border: 1px solid #4b0082; }
+        .rarity-white { background: #ffffff; color: #000; border: 1px solid #ccc; }
+        .is-fused { outline: 2px double #fff; outline-offset: 1px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+        @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        .collected-word { width: 100%; height: 100%; padding: 5px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+        .collected-word.selected { border: 2px solid #00f2ff !important; box-shadow: 0 0 10px #00f2ff; }
+        .dragging { opacity: 0.5; }
+        #sell-zone, .dict-sell-zone { border: 2px solid #ff4d4d; border-radius: 15px; background: rgba(255, 77, 77, 0.1); text-align: center; color: #ff4d4d; font-weight: bold; }
+        #return-zone { width: 100%; height: 40px; margin: 10px 0; border: 2px solid var(--neon-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--neon-blue); font-size: 0.7rem; background: rgba(0, 242, 255, 0.05); }
+        #combine-btn { background: var(--neon-pink); color: white; display: none; }
+        #shop-btn { background: var(--neon-gold); color: black; }
+        #shop-btn:disabled { background: #555; color: #888; }
+        .delete-btn { background: #ff4d4d; color: white; margin-top: 20px; padding: 10px; border-radius: 5px; width: 100%; }
+        #event-banner { position: fixed; top: 30%; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 20px #fff; z-index: 2000; pointer-events: none; display: none; animation: event-fade 2s forwards; }
+        @keyframes event-fade { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon-blue); margin-bottom: 10px; padding-bottom: 5px; }
+        .close-modal { cursor: pointer; color: var(--neon-pink); font-size: 1.5rem; }
+        .dict-title-input { background: transparent; border: none; border-bottom: 2px solid var(--neon-pink); color: white; font-size: 1.2rem; width: 120px; text-align: center; outline: none; }
+        .dict-nav { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+        .nav-arrow { cursor: pointer; color: var(--neon-blue); padding: 5px 8px; background: rgba(0, 242, 255, 0.1); border-radius: 5px; }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.1); padding: 8px; border-radius: 5px; margin-bottom: 5px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div id="title-screen">
+        <div class="title-container">
+            <h1 class="main-title">単語コレクション</h1>
+            <img src="mini.PNG" alt="Mascot" class="mascot-character">
+        </div>
+        <button class="start-btn" onclick="startGame()">GAME START</button>
+        <div class="creator-credit">制作者 ねっと</div>
+    </div>
+
+    <div class="stars" id="main-content-stars"></div>
+    <div id="event-banner"></div>
+
+    <div class="top-menu" id="main-content-menu">
+        <button class="menu-btn" onclick="openModal('modal-menu')">メニュー</button>
+        <button class="menu-btn" onclick="openModal('modal-shop')">店</button>
+        <button class="menu-btn" onclick="openModal('modal-settings')">設定</button>
+    </div>
+
+    <div id="modal-menu" class="modal">
+        <div class="modal-header"><span>メニュー</span><span class="close-modal" onclick="closeModal('modal-menu')">&times;</span></div>
+        <div class="modal-body">
+            <button class="menu-btn" style="width:100%; max-width:none; padding: 15px; margin-bottom: 10px;" onclick="openModal('modal-dictionary')">📖 単語図鑑を表示</button>
+            <div style="border-top: 1px solid #444; padding-top: 10px;">
+                <h4>パッシブスキル装備</h4>
+                <div id="passive-equip-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-dictionary" class="modal">
+        <div class="modal-header">
+            <div><input type="text" id="dict-title" class="dict-title-input" maxlength="10" placeholder="なまえ" oninput="saveData()"><span style="font-size: 1rem; color: var(--neon-pink);">図鑑</span></div>
+            <div class="dict-nav"><span class="nav-arrow" id="prev-page" onclick="changePage(-1)">＜</span><span id="page-display">1 / 1</span><span class="nav-arrow" id="next-page" onclick="changePage(1)">＞</span></div>
+            <span class="close-modal" onclick="closeModal('modal-dictionary')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 0.7rem; color: #aaa; margin: 0;">枠をタップで基地から移動</p>
+            <div id="dictionary-grid" class="collection-grid"></div>
+            <div id="return-zone">🛸 ここにドラッグして基地に戻す</div>
+            <div class="dict-sell-zone" id="dict-sell-zone">🗑️ ここにドラッグして売却</div>
+        </div>
+    </div>
+
+    <div id="modal-select-word" class="modal">
+        <div class="modal-header"><span>移動する単語を選択</span><span class="close-modal" onclick="closeModal('modal-select-word')">&times;</span></div>
+        <div class="modal-body" id="select-word-list"></div>
+    </div>
+
+    <div id="modal-shop" class="modal">
+        <div class="modal-header"><span>店</span><span class="close-modal" onclick="closeModal('modal-shop')">&times;</span></div>
+        <div class="modal-body">
+            <div style="border-bottom: 1px solid #444; padding-bottom: 10px;">
+                <h4>ガチャ</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="menu-btn" style="max-width:none;" onclick="playGacha('normal')">ノーマル (5000P)</button>
+                    <small id="pity-counter" style="color: var(--neon-blue); text-align:center;">レインボー確定まであと10回</small>
+                    <button class="menu-btn" style="max-width:none;" onclick="openModal('modal-event-shop')">イベントガチャ</button>
+                </div>
+            </div>
+            <div style="border-bottom: 1px solid #444; padding-top:10px; padding-bottom: 10px;">
+                <h4>図鑑拡張</h4>
+                <div class="shop-item">
+                    <span id="dict-page-info">図鑑拡張</span>
+                    <button class="menu-btn" id="expand-dict-btn" onclick="expandDictionary()">100,000P</button>
+                </div>
+            </div>
+            <div style="padding-top:10px;">
+                <h4>パッシブスキル</h4>
+                <div id="passive-shop-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-event-shop" class="modal">
+        <div class="modal-header"><span>イベントガチャ</span><span class="close-modal" onclick="closeModal('modal-event-shop')">&times;</span></div>
+        <div class="modal-body">
+            <div class="shop-item"><span>神の降臨</span><button class="menu-btn" onclick="playGacha('god')">500,000P</button></div>
+            <div class="shop-item"><span>暗黒の襲来</span><button class="menu-btn" onclick="playGacha('dark')">10,000P</button></div>
+            <div class="shop-item"><span>ラブコレ</span><button class="menu-btn" onclick="playGacha('love')">10,000P</button></div>
+            <div class="shop-item"><span>氷結吹雪</span><button class="menu-btn" onclick="playGacha('ice')">10,000P</button></div>
+            <div class="shop-item"><span>精霊森林</span><button class="menu-btn" onclick="playGacha('forest')">10,000P</button></div>
+        </div>
+    </div>
+
+    <div id="modal-settings" class="modal">
+        <div class="modal-header"><span>設定</span><span class="close-modal" onclick="closeModal('modal-settings')">&times;</span></div>
+        <div class="modal-body">
+            <button class="menu-btn" style="max-width:none; width:100%; margin-bottom:15px;" onclick="toggleFullScreen()">フルスクリーン切替</button>
+            <label>BGM 音量</label><input type="range" min="0" max="1" step="0.1" value="0.5" style="width:100%" onchange="updateVolume('bgm', this.value)">
+            <label>SE 音量</label><input type="range" min="0" max="1" step="0.1" value="0.5" style="width:100%" onchange="updateVolume('se', this.value)">
+            <button class="delete-btn" onclick="deleteData()">データをすべて削除</button>
+        </div>
+    </div>
+
+    <div id="modal-fusion-choice" class="modal">
+        <div class="modal-header"><span>色を選択</span></div>
+        <div class="modal-body">
+            <div id="fusion-options-container" style="display:flex; gap:10px; justify-content:center; padding:10px;"></div>
+        </div>
+    </div>
+
+    <div id="main-content-wrapper">
+        <h1>🌌 WORD COLLECTOR</h1>
+        
+        <div class="stats">
+            <span>P: <span id="total-points" class="points-display">0</span></span>
+            <span>基地: <span id="count" style="color: var(--neon-blue);">0 / 10</span></span>
+            <span id="fever-timer">FEVERまで: 240s</span>
+            <div class="action-btns">
+                <button id="combine-btn">FUSION (合体)</button>
+                <button id="shop-btn">基地拡張 (10,000P)</button>
+            </div>
+        </div>
+
+        <div id="conveyor-belt"></div>
+
+        <div id="collection-panel">
+            <h3 style="font-size:0.9rem; border-bottom: 1px solid var(--neon-pink); padding-bottom: 5px; margin-top:0;">🚀 単語基地</h3>
+            <div id="collection-grid" class="collection-grid"></div>
+        </div>
+
+        <div id="sell-zone">🗑️ ここに売却</div>
+    </div>
+
+    <script>
+        // --- 内部ロジックは変更なし ---
+        const bgm = new Audio('bgm.mp3'); bgm.loop = true;
+        const buySe = new Audio('buy.mp3'); const sellSe = new Audio('sell.mp3');
+
+        function startGame() {
+            const titleScreen = document.getElementById('title-screen');
+            const mainContent = document.getElementById('main-content-wrapper');
+            const mainStars = document.getElementById('main-content-stars');
+            const mainMenu = document.getElementById('main-content-menu');
+            titleScreen.style.opacity = '0';
+            setTimeout(() => {
+                titleScreen.style.display = 'none';
+                mainContent.style.opacity = '1';
+                mainContent.style.pointerEvents = 'auto';
+                mainStars.style.opacity = '1';
+                mainMenu.style.opacity = '1';
+                mainMenu.style.pointerEvents = 'auto';
+                if (bgm.paused) bgm.play().catch(e => {});
+            }, 800);
+        }
+
+        const panel = document.getElementById('collection-panel');
+        const belt = document.getElementById('conveyor-belt');
+        const grid = document.getElementById('collection-grid');
+        const dictGrid = document.getElementById('dictionary-grid');
+        const countDisplay = document.getElementById('count');
+        const pointsDisplay = document.getElementById('total-points');
+        const combineBtn = document.getElementById('combine-btn');
+        const shopBtn = document.getElementById('shop-btn');
+        const sellZone = document.getElementById('sell-zone');
+        const dictSellZone = document.getElementById('dict-sell-zone');
+        const feverDisplay = document.getElementById('fever-timer');
+        const eventBanner = document.getElementById('event-banner');
+        const pityDisplay = document.getElementById('pity-counter');
+        const dictTitleInput = document.getElementById('dict-title');
+        const returnZone = document.getElementById('return-zone');
+        const mainWrapper = document.getElementById('main-content-wrapper');
+        const mainStars = document.getElementById('main-content-stars');
+        const mainMenu = document.getElementById('main-content-menu');
+        
+        const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉっゃゅょー";
+        let collectedWords = new Set();
+        let selectedElements = [];
+        let totalPoints = 0;
+        let maxCapacity = 10;
+        let gachaCount = 0;
+        let maxDictPages = 1;
+        let currentDictPage = 0;
+        let dictionaryData = [[]];
+        let isFeverTime = false;
+        let feverRemaining = 240;
+        let isDarkEvent = false, isLoveEvent = false, isIceEvent = false, isForestEvent = false, isGodEvent = false;
+        let BELT_SPEED = 1.5; // スマホ用に少し落とす 
+        const WORD_SPACING = 250; // スマホ用に詰める
+
+        let passives = {
+            speed: { level: 0, equipped: false, customSpeed: 1.5 },
+            blackhole: { level: 0, equipped: false },
+            clover: { level: 0, equipped: false }
+        };
+
+        const passiveInfo = {
+            speed: { name: "速度アップ", levels: [{ boost: 1.0, cost: 0 }, { boost: 1.1, cost: 10000 }, { boost: 1.2, cost: 50000 }, { boost: 1.3, cost: 100000 }, { boost: 1.5, cost: 200000 }, { boost: 2.0, cost: 1000000 }] },
+            blackhole: { name: "ブラックホール", levels: [{ cost: 0 }, { cost: 100 }, { cost: 10000 }, { cost: 100000 }, { cost: 200000 }, { cost: 500000 }] },
+            clover: { name: "幸運のクローバー", levels: [{ cost: 0 }, { cost: 1000000 }] }
+        };
+
+        function formatPoints(num) {
+            if (num < 1000) return num.toString();
+            const units = ["", "K", "M", "B", "T", "Qa"];
+            const i = Math.floor(Math.log10(num) / 3);
+            return (num / Math.pow(1000, i)).toFixed(1).replace(/\.0$/, '') + units[i];
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => alert("Error"));
+            else document.exitFullscreen();
+        }
+
+        function saveData() {
+            if (window.isDeleting) return;
+            const wordList = [];
+            grid.querySelectorAll('.collected-word').forEach(el => {
+                wordList.push({ text: el.querySelector('.word-text').innerText, points: el.dataset.points, isFused: el.classList.contains('is-fused'), type: el.dataset.type || 'normal' });
+            });
+            updateCurrentPageData();
+            const data = { points: totalPoints, maxCapacity: maxCapacity, words: wordList, maxDictPages: maxDictPages, dictionaryData: dictionaryData, dictTitle: dictTitleInput.value, isFeverTime: isFeverTime, feverRemaining: feverRemaining, isDarkEvent: isDarkEvent, isLoveEvent: isLoveEvent, isIceEvent: isIceEvent, isForestEvent: isForestEvent, isGodEvent: isGodEvent, gachaCount: gachaCount, passives: passives };
+            localStorage.setItem('wordCollectorData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('wordCollectorData');
+            if (!saved) return;
+            const data = JSON.parse(saved);
+            totalPoints = data.points || 0;
+            maxCapacity = data.maxCapacity || 10;
+            isFeverTime = !!data.isFeverTime;
+            feverRemaining = data.feverRemaining ?? 240;
+            isDarkEvent = !!data.isDarkEvent; isLoveEvent = !!data.isLoveEvent; isIceEvent = !!data.isIceEvent; isForestEvent = !!data.isForestEvent; isGodEvent = !!data.isGodEvent;
+            gachaCount = data.gachaCount || 0;
+            dictTitleInput.value = data.dictTitle || "";
+            maxDictPages = data.maxDictPages || 1;
+            dictionaryData = data.dictionaryData || [[]];
+            if (data.passives) passives = data.passives;
+            pointsDisplay.innerText = formatPoints(totalPoints);
+            updatePityDisplay(); updateBeltSpeed();
+            if (isFeverTime) {
+                feverDisplay.classList.add('fever-active');
+                if (isDarkEvent) document.body.classList.add('dark-event-active');
+                if (isLoveEvent) document.body.classList.add('love-event-active');
+                if (isIceEvent) document.body.classList.add('ice-event-active');
+                if (isForestEvent) document.body.classList.add('forest-event-active');
+                if (isGodEvent) document.body.classList.add('god-event-active');
+                document.body.classList.add('fever-mode');
+            }
+            initSlots(); initDictSlots();
+            if (data.words) data.words.forEach(w => collectWord(w.text, w.isFused, parseInt(w.points), w.type));
+            renderDictPage(); updateDictPageDisplay();
+        }
+
+        function deleteData() { if(confirm("削除しますか？")) { window.isDeleting = true; localStorage.removeItem('wordCollectorData'); location.reload(); } }
+        function updatePityDisplay() { if (pityDisplay) pityDisplay.innerText = `レインボー確定まであと${10 - gachaCount}回`; }
+        function openModal(id) { 
+            if (['modal-dictionary','modal-shop','modal-settings'].includes(id)) closeModal('modal-menu');
+            document.getElementById(id).style.display = 'block'; 
+            if (id === 'modal-shop') updatePassiveShop();
+            if (id === 'modal-menu') updatePassiveEquip();
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function updateVolume(type, val) { if (type === 'bgm') bgm.volume = val; if (type === 'se') { buySe.volume = val; sellSe.volume = val; } }
+
+        function updatePassiveShop() {
+            const container = document.getElementById('passive-shop-list');
+            container.innerHTML = '';
+            for (const key in passives) {
+                const skill = passives[key]; const info = passiveInfo[key];
+                const nextLv = skill.level + 1; const item = document.createElement('div'); item.className = 'shop-item';
+                let btnHtml = (skill.level >= info.levels.length - 1) ? `<button class="menu-btn" disabled>MAX</button>` : `<button class="menu-btn" onclick="buyPassive('${key}')" ${totalPoints < info.levels[nextLv].cost ? 'disabled' : ''}>${formatPoints(info.levels[nextLv].cost)}P</button>`;
+                item.innerHTML = `<div><span>${info.name} Lv.${skill.level}</span></div>${btnHtml}`;
+                container.appendChild(item);
+            }
+        }
+
+        function buyPassive(key) {
+            const nextLv = passives[key].level + 1;
+            if (totalPoints >= passiveInfo[key].levels[nextLv].cost) {
+                totalPoints -= passiveInfo[key].levels[nextLv].cost;
+                passives[key].level = nextLv; pointsDisplay.innerText = formatPoints(totalPoints);
+                buySe.play(); updatePassiveShop(); saveData();
+            }
+        }
+
+        function updatePassiveEquip() {
+            const container = document.getElementById('passive-equip-list'); container.innerHTML = '';
+            for (const key in passives) {
+                if (passives[key].level === 0) continue;
+                const item = document.createElement('div'); item.className = 'shop-item';
+                item.innerHTML = `<span>${passiveInfo[key].name}</span><button class="menu-btn" onclick="equipPassive('${key}')">${passives[key].equipped ? '装備中' : '装備'}</button>`;
+                container.appendChild(item);
+            }
+        }
+
+        function equipPassive(key) {
+            const cur = passives[key].equipped;
+            for (const k in passives) passives[k].equipped = false;
+            passives[key].equipped = !cur; updateBeltSpeed(); updatePassiveEquip(); saveData();
+        }
+
+        function updateBeltSpeed() { 
+            BELT_SPEED = passives.speed.equipped ? (1.5 * passiveInfo.speed.levels[passives.speed.level].boost) : 1.5; 
+        }
+
+        function updateDictShopStatus() {
+            const btn = document.getElementById('expand-dict-btn');
+            if(maxDictPages >= 10) { btn.innerText = "MAX"; btn.disabled = true; } 
+            else { btn.innerText = "100,000P"; btn.disabled = totalPoints < 100000; }
+        }
+
+        function expandDictionary() {
+            if(totalPoints >= 100000 && maxDictPages < 10) {
+                totalPoints -= 100000; maxDictPages++; dictionaryData.push([]);
+                pointsDisplay.innerText = formatPoints(totalPoints); buySe.play(); updateDictPageDisplay(); updateDictShopStatus(); saveData();
+            }
+        }
+
+        function changePage(dir) {
+            updateCurrentPageData();
+            const next = currentDictPage + dir;
+            if(next >= 0 && next < maxDictPages) { currentDictPage = next; renderDictPage(); updateDictPageDisplay(); }
+        }
+
+        function updateDictPageDisplay() {
+            document.getElementById('page-display').innerText = `${currentDictPage + 1} / ${maxDictPages}`;
+            document.getElementById('prev-page').classList.toggle('disabled', currentDictPage === 0);
+            document.getElementById('next-page').classList.toggle('disabled', currentDictPage === maxDictPages - 1);
+        }
+
+        function updateCurrentPageData() {
+            const list = [];
+            dictGrid.querySelectorAll('.word-slot').forEach(slot => {
+                const el = slot.querySelector('.collected-word');
+                if(el) list.push({ text: el.querySelector('.word-text').innerText, points: el.dataset.points, isFused: el.classList.contains('is-fused'), type: el.dataset.type });
+                else list.push(null);
+            });
+            dictionaryData[currentDictPage] = list;
+        }
+
+        function renderDictPage() {
+            const slots = dictGrid.querySelectorAll('.word-slot');
+            const pageData = dictionaryData[currentDictPage] || [];
+            slots.forEach((slot, i) => {
+                slot.innerHTML = ''; const w = pageData[i];
+                if(w) slot.appendChild(createWordElement(w.text, w.isFused, parseInt(w.points), w.type));
+            });
+            updateCount();
+        }
+
+        function playGacha(type) {
+            let cost = type === 'normal' ? 5000 : (type === 'god' ? 500000 : 10000);
+            if (totalPoints >= cost) {
+                if (grid.querySelectorAll('.collected-word').length >= maxCapacity) return;
+                totalPoints -= cost; pointsDisplay.innerText = formatPoints(totalPoints); buySe.play();
+                let length;
+                if (type === 'normal') {
+                    gachaCount++;
+                    if (gachaCount >= 10) length = 1;
+                    else {
+                        const roll = Math.random() * 100;
+                        if (roll < 50) length = 5; else if (roll < 75) length = 4; else if (roll < 90) length = 3; else if (roll < 98) length = 2; else length = 1; 
+                    }
+                    if (length === 1) gachaCount = 0;
+                    updatePityDisplay();
+                } else {
+                    length = Math.floor(Math.random() * 5) + 1;
+                }
+                let word = ""; for (let i = 0; i < length; i++) word += chars.charAt(Math.floor(Math.random() * chars.length));
+                collectWord(word, false, null, type === 'normal' ? 'normal' : type); saveData();
+            }
+        }
+
+        setInterval(() => {
+            feverRemaining--;
+            if (feverRemaining <= 0) {
+                isFeverTime = !isFeverTime; feverRemaining = isFeverTime ? 60 : 240;
+                document.body.classList.remove('dark-event-active','love-event-active','ice-event-active','forest-event-active','god-event-active');
+                isDarkEvent = isLoveEvent = isIceEvent = isForestEvent = isGodEvent = false;
+                if (isFeverTime) {
+                    feverDisplay.classList.add('fever-active'); document.body.classList.add('fever-mode');
+                    const eventRoll = Math.random();
+                    if (eventRoll < 0.01) { isGodEvent = true; eventBanner.innerText = "神降臨！"; document.body.classList.add('god-event-active'); }
+                    else if (eventRoll < 0.1) { isDarkEvent = true; eventBanner.innerText = "暗黒！"; document.body.classList.add('dark-event-active'); }
+                    else if (eventRoll < 0.2) { isLoveEvent = true; eventBanner.innerText = "ラブ！"; document.body.classList.add('love-event-active'); }
+                    if (isDarkEvent || isLoveEvent || isGodEvent) { eventBanner.style.display = "block"; setTimeout(() => { eventBanner.style.display = "none"; }, 2000); }
+                } else { feverDisplay.classList.remove('fever-active'); document.body.classList.remove('fever-mode'); }
+            }
+            feverDisplay.innerText = isFeverTime ? `FEVER: ${feverRemaining}s` : `FEVERまで: ${feverRemaining}s`;
+            saveData();
+        }, 1000);
+
+        function calculatePoints(word, type = 'normal') {
+            const len = word.length; let base = 0;
+            if (len === 1) base = 5000; else if (len === 2) base = 2000; else if (len === 3) base = 500; else if (len === 4) base = 100; else base = 10;
+            return (type !== 'normal') ? base * 2 : base;
+        }
+
+        function getRarityClass(word, type = 'normal') {
+            if (type === 'god') return 'rarity-god'; if (type === 'dark') return 'rarity-dark'; if (type === 'love') return 'rarity-love';
+            const len = word.length;
+            if (len === 1) return 'rarity-rainbow'; if (len === 2) return 'rarity-yellow'; if (len === 3) return 'rarity-red'; if (len === 4) return 'rarity-purple';
+            return 'rarity-white';
+        }
+
+        function generateRandomWord() {
+            let length; const roll = Math.random() * 100;
+            if (isFeverTime || passives.clover.equipped) {
+                if (roll < 10) length = 1; else if (roll < 30) length = 2; else if (roll < 60) length = 3; else length = 4;
+            } else {
+                if (roll < 0.5) length = 1; else if (roll < 5) length = 2; else if (roll < 15) length = 3; else length = 5;
+            }
+            let word = ""; for (let i = 0; i < length; i++) word += chars.charAt(Math.floor(Math.random() * chars.length));
+            return word;
+        }
+
+        function createBaseSlot(type) {
+            const slot = document.createElement('div'); slot.className = 'word-slot' + (type === 'dict' ? ' dict-slot' : '');
+            slot.addEventListener('dragover', e => e.preventDefault());
+            slot.addEventListener('drop', e => {
+                e.preventDefault(); const draggingEl = document.querySelector('.dragging');
+                if (draggingEl) { if (slot.children.length > 0) draggingEl.parentElement.appendChild(slot.children[0]); slot.appendChild(draggingEl); updateCount(); saveData(); }
+            });
+            if (type === 'dict') slot.onclick = () => { if (slot.children.length === 0) openWordSelector(slot); };
+            return slot;
+        }
+
+        function initSlots() { grid.innerHTML = ''; for (let i = 0; i < maxCapacity; i++) grid.appendChild(createBaseSlot('base')); }
+        function initDictSlots() { dictGrid.innerHTML = ''; for (let i = 0; i < 20; i++) dictGrid.appendChild(createBaseSlot('dict')); }
+
+        function openWordSelector(targetSlot) {
+            const list = document.getElementById('select-word-list'); list.innerHTML = '';
+            grid.querySelectorAll('.collected-word').forEach(wordEl => {
+                const btn = document.createElement('div'); btn.className = 'shop-item';
+                btn.innerHTML = `<span>${wordEl.querySelector('.word-text').innerText}</span><button class="menu-btn">移動</button>`;
+                btn.onclick = () => { targetSlot.appendChild(wordEl); closeModal('modal-select-word'); updateCurrentPageData(); renderDictPage(); updateCount(); saveData(); };
+                list.appendChild(btn);
+            });
+            openModal('modal-select-word');
+        }
+
+        function createWordObject() {
+            const container = document.createElement('div'); container.className = 'word-container';
+            const wordText = generateRandomWord();
+            const currentType = isGodEvent ? 'god' : (isDarkEvent ? 'dark' : (isLoveEvent ? 'love' : 'normal'));
+            const val = calculatePoints(wordText, currentType);
+            const wordEl = document.createElement('div'); wordEl.className = `word-item ${getRarityClass(wordText, currentType)}`;
+            wordEl.innerHTML = `<span class="word-text">${wordText}</span>`;
+            container.appendChild(wordEl); belt.appendChild(container);
+            let posX = window.innerWidth;
+            function move() { 
+                posX -= BELT_SPEED; container.style.left = posX + 'px'; 
+                if (posX < -200) {
+                    if (passives.blackhole.equipped && wordText.length >= (6 - passives.blackhole.level)) { totalPoints += val; pointsDisplay.innerText = formatPoints(totalPoints); sellSe.play(); }
+                    container.remove(); 
+                } else requestAnimationFrame(move);
+            }
+            wordEl.onclick = () => {
+                if (grid.querySelectorAll('.collected-word').length < maxCapacity) { buySe.play(); collectWord(wordText, false, val, currentType); container.remove(); saveData(); }
+            };
+            move();
+        }
+
+        function createWordElement(word, isFused, points, type) {
+            const item = document.createElement('div'); item.draggable = true; item.dataset.points = points; item.dataset.type = type;
+            item.className = `collected-word ${getRarityClass(word, type)}`; if (isFused) item.classList.add('is-fused');
+            item.innerHTML = `<span class="word-text">${word}</span><span style="font-size:0.5rem">${formatPoints(points)}P</span>`;
+            item.onclick = (e) => { e.stopPropagation(); toggleSelection(item, word); };
+            item.addEventListener('dragstart', () => item.classList.add('dragging'));
+            item.addEventListener('dragend', () => item.classList.remove('dragging'));
+            return item;
+        }
+
+        function collectWord(word, isFused = false, existingPoints = null, type = 'normal') {
+            const points = existingPoints || calculatePoints(word, type);
+            const item = createWordElement(word, isFused, points, type);
+            const slots = grid.querySelectorAll('.word-slot');
+            for (let slot of slots) { if (slot.children.length === 0) { slot.appendChild(item); break; } }
+            updateCount();
+        }
+
+        sellZone.addEventListener('dragover', e => e.preventDefault());
+        sellZone.addEventListener('drop', () => {
+            const drag = document.querySelector('.dragging');
+            if (drag) { totalPoints += parseInt(drag.dataset.points); pointsDisplay.innerText = formatPoints(totalPoints); drag.remove(); sellSe.play(); updateCount(); saveData(); }
+        });
+
+        function toggleSelection(element, word) {
+            if (element.parentElement.closest('#dictionary-grid')) return;
+            if (element.classList.contains('selected')) { element.classList.remove('selected'); selectedElements = selectedElements.filter(el => el.el !== element); }
+            else if (selectedElements.length < 2) { element.classList.add('selected'); selectedElements.push({ el: element, text: word, type: element.dataset.type }); }
+            combineBtn.style.display = selectedElements.length === 2 ? 'block' : 'none';
+        }
+
+        combineBtn.onclick = () => {
+            if (selectedElements.length === 2) {
+                const newWord = selectedElements[0].text + selectedElements[1].text;
+                if (newWord.length > 10) return;
+                finishFusion(newWord, selectedElements[0].type !== 'normal' ? selectedElements[0].type : selectedElements[1].type);
+            }
+        };
+
+        function finishFusion(newWord, finalType) {
+            selectedElements.forEach(item => item.el.remove());
+            collectWord(newWord, true, null, finalType);
+            selectedElements = []; combineBtn.style.display = 'none'; saveData();
+        }
+
+        shopBtn.onclick = () => {
+            if (totalPoints >= 10000 && maxCapacity < 50) {
+                totalPoints -= 10000; maxCapacity++; pointsDisplay.innerText = formatPoints(totalPoints);
+                grid.appendChild(createBaseSlot('base')); updateCount(); updateShopStatus(); saveData();
+            }
+        };
+
+        function updateShopStatus() {
+            if (maxCapacity >= 50) { shopBtn.innerText = "MAX"; shopBtn.disabled = true; } 
+            else { shopBtn.disabled = totalPoints < 10000; }
+            updateDictShopStatus();
+        }
+
+        function updateCount() { countDisplay.innerText = `${grid.querySelectorAll('.collected-word').length} / ${maxCapacity}`; }
+
+        function updateGame() {
+            const currentItems = belt.getElementsByClassName('word-container');
+            if (currentItems.length === 0) createWordObject();
+            else if (parseFloat(currentItems[currentItems.length - 1].style.left) <= window.innerWidth - WORD_SPACING) createWordObject();
+            requestAnimationFrame(updateGame);
+        }
+
+        initSlots(); initDictSlots(); loadData(); updateGame(); updateShopStatus();
+    </script>
+</body>
+</html>
