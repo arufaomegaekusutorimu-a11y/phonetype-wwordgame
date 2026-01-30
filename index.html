@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>単語コレクター - Cosmic Edition</title>
+    <title>単語コレクター LITE - Cosmic Edition</title>
     <style>
         :root {
             --space-bg: #0b0d17;
@@ -54,10 +54,10 @@
         }
 
         .main-title {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: bold;
             text-shadow: 0 0 15px var(--neon-blue);
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             margin: 0;
         }
 
@@ -91,10 +91,15 @@
             padding: 10px;
             box-sizing: border-box;
             opacity: 0;
-            transition: opacity 1s ease;
+            transition: opacity 1s ease, filter 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        .modal-active-blur {
+            filter: blur(5px);
+            pointer-events: none;
         }
 
         #main-content-menu, #main-content-stars {
@@ -120,6 +125,7 @@
             gap: 8px;
             padding: 10px 0;
             z-index: 100;
+            transition: filter 0.3s ease;
         }
 
         .menu-btn {
@@ -130,7 +136,7 @@
             border-radius: 5px;
             font-size: 0.8rem;
             flex: 1;
-            max-width: 100px;
+            max-width: 120px;
             text-align: center;
         }
 
@@ -150,18 +156,13 @@
             overflow-y: auto;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            margin: 10px 0;
-            text-align: center;
-        }
-
         .stats {
             width: 95%;
             background: rgba(0, 0, 0, 0.6);
             padding: 10px;
             border-radius: 15px;
             border: 1px solid var(--neon-blue);
+            margin-top: 10px;
             margin-bottom: 15px;
             display: flex;
             flex-wrap: wrap;
@@ -226,11 +227,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 40px;
         }
 
         .collected-word .word-text { font-size: 0.75rem; }
         
-        /* 売却・戻すボタンのスマホ最適化スタイル */
         .op-btn {
             width: 95%;
             padding: 12px;
@@ -240,13 +241,11 @@
             border-radius: 10px;
             border: none;
             cursor: pointer;
-            display: none; /* 選択中のみ表示 */
+            display: none;
         }
 
-        #sell-btn-main, #sell-btn-dict { background: rgba(255, 77, 77, 0.8); color: white; border: 1px solid #ff4d4d; }
-        #return-btn-dict { background: rgba(0, 242, 255, 0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue); }
+        #sell-btn-main { background: rgba(255, 77, 77, 0.8); color: white; border: 1px solid #ff4d4d; }
 
-        /* その他の既存スタイル維持 */
         body.dark-event-active { background: #050505 !important; }
         body.love-event-active { background: radial-gradient(circle at center, #ffb6c1 0%, #8b4367 100%) !important; }
         body.ice-event-active { background: radial-gradient(circle at center, #add8e6 0%, #4682b4 100%) !important; }
@@ -257,6 +256,8 @@
         #fever-timer { min-width: 100px; text-align: center; }
         .fever-active { color: var(--neon-pink); animation: pulse 0.5s infinite alternate; }
         .word-container { position: absolute; height: 100%; display: flex; align-items: center; left: 100%; }
+        
+        /* Rarity Styles */
         .rarity-dark { background: #000 !important; color: #fff !important; border: 1px solid #444; }
         .rarity-love { background: #ffb6c1 !important; color: #000 !important; border: 1px solid #ff69b4; }
         .rarity-ice { background: #add8e6 !important; color: #000 !important; border: 1px solid #00bfff; }
@@ -267,29 +268,45 @@
         .rarity-purple { background: #800080; border: 1px solid #4b0082; }
         .rarity-white { background: #ffffff; color: #000; border: 1px solid #ccc; }
         .is-fused { outline: 2px double #fff; outline-offset: 1px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+        
         @keyframes rainbow-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        
         .collected-word { width: 100%; height: 100%; padding: 5px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
         .collected-word.selected { border: 2px solid #00f2ff !important; box-shadow: 0 0 10px #00f2ff; }
-        #combine-btn { background: var(--neon-pink); color: white; display: none; }
+        
         #shop-btn { background: var(--neon-gold); color: black; }
         #shop-btn:disabled { background: #555; color: #888; }
-        .delete-btn { background: #ff4d4d; color: white; margin-top: 20px; padding: 10px; border-radius: 5px; width: 100%; }
+        
         #event-banner { position: fixed; top: 30%; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 20px #fff; z-index: 2000; pointer-events: none; display: none; animation: event-fade 2s forwards; }
         @keyframes event-fade { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+        
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon-blue); margin-bottom: 10px; padding-bottom: 5px; }
         .close-modal { cursor: pointer; color: var(--neon-pink); font-size: 1.5rem; }
-        .dict-title-input { background: transparent; border: none; border-bottom: 2px solid var(--neon-pink); color: white; font-size: 1.2rem; width: 120px; text-align: center; outline: none; }
-        .dict-nav { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
-        .nav-arrow { cursor: pointer; color: var(--neon-blue); padding: 5px 8px; background: rgba(0, 242, 255, 0.1); border-radius: 5px; }
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.1); padding: 8px; border-radius: 5px; margin-bottom: 5px; font-size: 0.8rem; }
+
+        #action-confirm-ui {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            width: 95%;
+            margin-bottom: 15px;
+            background: rgba(255, 0, 222, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--neon-pink);
+        }
+        .confirm-btn-group { display: flex; gap: 10px; }
+        .confirm-btn-group button { flex: 1; padding: 10px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        #btn-move { background: var(--neon-blue); color: black; }
+        #btn-fusion { background: var(--neon-pink); color: white; }
     </style>
 </head>
 <body>
 
     <div id="title-screen">
         <div class="title-container">
-            <h1 class="main-title">単語コレクション</h1>
+            <h1 class="main-title">単語コレクション<br><span style="font-size: 1.2rem; color: var(--neon-pink);">LITEver</span></h1>
             <img src="mini.PNG" alt="Mascot" class="mascot-character">
         </div>
         <button class="start-btn" onclick="startGame()">GAME START</button>
@@ -302,31 +319,16 @@
     <div class="top-menu" id="main-content-menu">
         <button class="menu-btn" onclick="openModal('modal-menu')">メニュー</button>
         <button class="menu-btn" onclick="openModal('modal-shop')">店</button>
-        <button class="menu-btn" onclick="openModal('modal-settings')">設定</button>
     </div>
 
     <div id="modal-menu" class="modal">
         <div class="modal-header"><span>メニュー</span><span class="close-modal" onclick="closeModal('modal-menu')">&times;</span></div>
         <div class="modal-body">
-            <button class="menu-btn" style="width:100%; max-width:none; padding: 15px; margin-bottom: 10px;" onclick="openModal('modal-dictionary')">📖 単語図鑑を表示</button>
-            <div style="border-top: 1px solid #444; padding-top: 10px;">
+            <div style="padding-top: 10px;">
                 <h4>パッシブスキル装備</h4>
                 <div id="passive-equip-list" style="display:flex; flex-direction:column; gap:5px;"></div>
             </div>
-        </div>
-    </div>
-
-    <div id="modal-dictionary" class="modal">
-        <div class="modal-header">
-            <div><input type="text" id="dict-title" class="dict-title-input" maxlength="10" placeholder="なまえ" oninput="saveData()"><span style="font-size: 1rem; color: var(--neon-pink);">図鑑</span></div>
-            <div class="dict-nav"><span class="nav-arrow" id="prev-page" onclick="changePage(-1)">＜</span><span id="page-display">1 / 1</span><span class="nav-arrow" id="next-page" onclick="changePage(1)">＞</span></div>
-            <span class="close-modal" onclick="closeModal('modal-dictionary')">&times;</span>
-        </div>
-        <div class="modal-body" style="text-align: center;">
-            <p style="font-size: 0.7rem; color: #aaa; margin: 0 0 10px 0;">単語をタップして選択</p>
-            <div id="dictionary-grid" class="collection-grid"></div>
-            <button id="return-btn-dict" class="op-btn" onclick="returnSelectedToMain()">🛸 基地に戻す</button>
-            <button id="sell-btn-dict" class="op-btn" onclick="sellSelectedWord()">🗑️ 選択した単語を売却</button>
+            <button class="menu-btn" style="max-width:none; width:100%; margin-top:30px; background: #ff4d4d;" onclick="deleteData()">データを初期化</button>
         </div>
     </div>
 
@@ -339,13 +341,6 @@
                     <button class="menu-btn" style="max-width:none;" onclick="playGacha('normal')">ノーマル (5000P)</button>
                     <small id="pity-counter" style="color: var(--neon-blue); text-align:center;">レインボー確定まであと10回</small>
                     <button class="menu-btn" style="max-width:none;" onclick="openModal('modal-event-shop')">イベントガチャ</button>
-                </div>
-            </div>
-            <div style="border-bottom: 1px solid #444; padding-top:10px; padding-bottom: 10px;">
-                <h4>図鑑拡張</h4>
-                <div class="shop-item">
-                    <span id="dict-page-info">図鑑拡張</span>
-                    <button class="menu-btn" id="expand-dict-btn" onclick="expandDictionary()">100,000P</button>
                 </div>
             </div>
             <div style="padding-top:10px;">
@@ -366,33 +361,27 @@
         </div>
     </div>
 
-    <div id="modal-settings" class="modal">
-        <div class="modal-header"><span>設定</span><span class="close-modal" onclick="closeModal('modal-settings')">&times;</span></div>
-        <div class="modal-body">
-            <button class="menu-btn" style="max-width:none; width:100%; margin-bottom:15px;" onclick="toggleFullScreen()">フルスクリーン切替</button>
-            <label>BGM 音量</label><input type="range" min="0" max="1" step="0.1" value="0.5" style="width:100%" onchange="updateVolume('bgm', this.value)">
-            <label>SE 音量</label><input type="range" min="0" max="1" step="0.1" value="0.5" style="width:100%" onchange="updateVolume('se', this.value)">
-            <button class="delete-btn" onclick="deleteData()">データをすべて削除</button>
-        </div>
-    </div>
-
     <div id="main-content-wrapper">
-        <h1>🌌 WORD COLLECTOR</h1>
-        
         <div class="stats">
             <span>P: <span id="total-points" class="points-display">0</span></span>
             <span>基地: <span id="count" style="color: var(--neon-blue);">0 / 10</span></span>
             <span id="fever-timer">FEVERまで: 240s</span>
             <div class="action-btns">
-                <button id="combine-btn">FUSION (合体)</button>
                 <button id="shop-btn">基地拡張 (10,000P)</button>
             </div>
         </div>
 
         <div id="conveyor-belt"></div>
 
+        <div id="action-confirm-ui">
+            <div style="text-align: center; font-size: 0.8rem; margin-bottom: 5px;">単語をどうしますか？</div>
+            <div class="confirm-btn-group">
+                <button id="btn-move">位置を移動</button>
+                <button id="btn-fusion">融合(FUSION)</button>
+            </div>
+        </div>
+
         <div id="collection-panel">
-            <h3 style="font-size:0.9rem; border-bottom: 1px solid var(--neon-pink); padding-bottom: 5px; margin-top:0;">🚀 単語基地</h3>
             <div id="collection-grid" class="collection-grid"></div>
         </div>
 
@@ -422,25 +411,20 @@
 
         const belt = document.getElementById('conveyor-belt');
         const grid = document.getElementById('collection-grid');
-        const dictGrid = document.getElementById('dictionary-grid');
         const countDisplay = document.getElementById('count');
         const pointsDisplay = document.getElementById('total-points');
-        const combineBtn = document.getElementById('combine-btn');
         const shopBtn = document.getElementById('shop-btn');
         const feverDisplay = document.getElementById('fever-timer');
         const eventBanner = document.getElementById('event-banner');
         const pityDisplay = document.getElementById('pity-counter');
-        const dictTitleInput = document.getElementById('dict-title');
+        const confirmUI = document.getElementById('action-confirm-ui');
         
         const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉっゃゅょー";
-        let selectedElements = []; // 合体用
-        let activeSelect = null;   // 移動・売却用 (1つ選択)
+        let selectedElements = []; 
+        let activeSelect = null;   
         let totalPoints = 0;
         let maxCapacity = 10;
         let gachaCount = 0;
-        let maxDictPages = 1;
-        let currentDictPage = 0;
-        let dictionaryData = [[]];
         let isFeverTime = false;
         let feverRemaining = 240;
         let isDarkEvent = false, isLoveEvent = false, isIceEvent = false, isForestEvent = false, isGodEvent = false;
@@ -466,24 +450,23 @@
             return (num / Math.pow(1000, i)).toFixed(1).replace(/\.0$/, '') + units[i];
         }
 
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => alert("Error"));
-            else document.exitFullscreen();
-        }
-
         function saveData() {
             if (window.isDeleting) return;
             const wordList = [];
-            grid.querySelectorAll('.collected-word').forEach(el => {
-                wordList.push({ text: el.querySelector('.word-text').innerText, points: el.dataset.points, isFused: el.classList.contains('is-fused'), type: el.dataset.type || 'normal' });
+            grid.querySelectorAll('.word-slot').forEach(slot => {
+                const el = slot.querySelector('.collected-word');
+                if(el) {
+                    wordList.push({ text: el.querySelector('.word-text').innerText, points: el.dataset.points, isFused: el.classList.contains('is-fused'), type: el.dataset.type || 'normal' });
+                } else {
+                    wordList.push(null);
+                }
             });
-            updateCurrentPageData();
-            const data = { points: totalPoints, maxCapacity: maxCapacity, words: wordList, maxDictPages: maxDictPages, dictionaryData: dictionaryData, dictTitle: dictTitleInput.value, isFeverTime: isFeverTime, feverRemaining: feverRemaining, isDarkEvent: isDarkEvent, isLoveEvent: isLoveEvent, isIceEvent: isIceEvent, isForestEvent: isForestEvent, isGodEvent: isGodEvent, gachaCount: gachaCount, passives: passives };
-            localStorage.setItem('wordCollectorData', JSON.stringify(data));
+            const data = { points: totalPoints, maxCapacity: maxCapacity, words: wordList, isFeverTime: isFeverTime, feverRemaining: feverRemaining, isDarkEvent: isDarkEvent, isLoveEvent: isLoveEvent, isIceEvent: isIceEvent, isForestEvent: isForestEvent, isGodEvent: isGodEvent, gachaCount: gachaCount, passives: passives };
+            localStorage.setItem('wordCollectorDataLITE', JSON.stringify(data));
         }
 
         function loadData() {
-            const saved = localStorage.getItem('wordCollectorData');
+            const saved = localStorage.getItem('wordCollectorDataLITE');
             if (!saved) return;
             const data = JSON.parse(saved);
             totalPoints = data.points || 0;
@@ -492,36 +475,46 @@
             feverRemaining = data.feverRemaining ?? 240;
             isDarkEvent = !!data.isDarkEvent; isLoveEvent = !!data.isLoveEvent; isIceEvent = !!data.isIceEvent; isForestEvent = !!data.isForestEvent; isGodEvent = !!data.isGodEvent;
             gachaCount = data.gachaCount || 0;
-            dictTitleInput.value = data.dictTitle || "";
-            maxDictPages = data.maxDictPages || 1;
-            dictionaryData = data.dictionaryData || [[]];
             if (data.passives) passives = data.passives;
             pointsDisplay.innerText = formatPoints(totalPoints);
             updatePityDisplay(); updateBeltSpeed();
-            if (isFeverTime) {
-                feverDisplay.classList.add('fever-active');
-                if (isDarkEvent) document.body.classList.add('dark-event-active');
-                if (isLoveEvent) document.body.classList.add('love-event-active');
-                if (isIceEvent) document.body.classList.add('ice-event-active');
-                if (isForestEvent) document.body.classList.add('forest-event-active');
-                if (isGodEvent) document.body.classList.add('god-event-active');
-                document.body.classList.add('fever-mode');
+            initSlots();
+            if (data.words) {
+                const slots = grid.querySelectorAll('.word-slot');
+                data.words.forEach((w, i) => {
+                    if(w && slots[i]) {
+                        slots[i].appendChild(createWordElement(w.text, w.isFused, parseInt(w.points), w.type));
+                    }
+                });
             }
-            initSlots(); initDictSlots();
-            if (data.words) data.words.forEach(w => collectWord(w.text, w.isFused, parseInt(w.points), w.type));
-            renderDictPage(); updateDictPageDisplay();
+            updateCount();
         }
 
-        function deleteData() { if(confirm("削除しますか？")) { window.isDeleting = true; localStorage.removeItem('wordCollectorData'); location.reload(); } }
+        function deleteData() { if(confirm("データを削除しますか？")) { window.isDeleting = true; localStorage.removeItem('wordCollectorDataLITE'); location.reload(); } }
         function updatePityDisplay() { if (pityDisplay) pityDisplay.innerText = `レインボー確定まであと${10 - gachaCount}回`; }
+        
         function openModal(id) { 
-            clearSelection();
-            if (['modal-dictionary','modal-shop','modal-settings'].includes(id)) closeModal('modal-menu');
+            if (id === 'modal-shop') closeModal('modal-menu', false);
+            if (id === 'modal-menu') closeModal('modal-shop', false);
+            if (id === 'modal-event-shop') closeModal('modal-shop', false);
+
             document.getElementById(id).style.display = 'block'; 
+            document.getElementById('main-content-wrapper').classList.add('modal-active-blur');
+            document.getElementById('main-content-menu').classList.add('modal-active-blur');
+
             if (id === 'modal-shop') updatePassiveShop();
             if (id === 'modal-menu') updatePassiveEquip();
         }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; clearSelection(); }
+
+        function closeModal(id, removeBlur = true) { 
+            document.getElementById(id).style.display = 'none'; 
+            if (removeBlur) {
+                document.getElementById('main-content-wrapper').classList.remove('modal-active-blur');
+                document.getElementById('main-content-menu').classList.remove('modal-active-blur');
+            }
+            clearSelection(); 
+        }
+
         function updateVolume(type, val) { if (type === 'bgm') bgm.volume = val; if (type === 'se') { buySe.volume = val; sellSe.volume = val; } }
 
         function updatePassiveShop() {
@@ -565,51 +558,6 @@
             BELT_SPEED = passives.speed.equipped ? (1.5 * passiveInfo.speed.levels[passives.speed.level].boost) : 1.5; 
         }
 
-        function updateDictShopStatus() {
-            const btn = document.getElementById('expand-dict-btn');
-            if(maxDictPages >= 10) { btn.innerText = "MAX"; btn.disabled = true; } 
-            else { btn.innerText = "100,000P"; btn.disabled = totalPoints < 100000; }
-        }
-
-        function expandDictionary() {
-            if(totalPoints >= 100000 && maxDictPages < 10) {
-                totalPoints -= 100000; maxDictPages++; dictionaryData.push([]);
-                pointsDisplay.innerText = formatPoints(totalPoints); buySe.play(); updateDictPageDisplay(); updateDictShopStatus(); saveData();
-            }
-        }
-
-        function changePage(dir) {
-            updateCurrentPageData();
-            const next = currentDictPage + dir;
-            if(next >= 0 && next < maxDictPages) { currentDictPage = next; renderDictPage(); updateDictPageDisplay(); }
-        }
-
-        function updateDictPageDisplay() {
-            document.getElementById('page-display').innerText = `${currentDictPage + 1} / ${maxDictPages}`;
-            document.getElementById('prev-page').classList.toggle('disabled', currentDictPage === 0);
-            document.getElementById('next-page').classList.toggle('disabled', currentDictPage === maxDictPages - 1);
-        }
-
-        function updateCurrentPageData() {
-            const list = [];
-            dictGrid.querySelectorAll('.word-slot').forEach(slot => {
-                const el = slot.querySelector('.collected-word');
-                if(el) list.push({ text: el.querySelector('.word-text').innerText, points: el.dataset.points, isFused: el.classList.contains('is-fused'), type: el.dataset.type });
-                else list.push(null);
-            });
-            dictionaryData[currentDictPage] = list;
-        }
-
-        function renderDictPage() {
-            const slots = dictGrid.querySelectorAll('.word-slot');
-            const pageData = dictionaryData[currentDictPage] || [];
-            slots.forEach((slot, i) => {
-                slot.innerHTML = ''; const w = pageData[i];
-                if(w) slot.appendChild(createWordElement(w.text, w.isFused, parseInt(w.points), w.type));
-            });
-            updateCount();
-        }
-
         function playGacha(type) {
             let cost = type === 'normal' ? 5000 : (type === 'god' ? 500000 : 10000);
             if (totalPoints >= cost) {
@@ -625,9 +573,7 @@
                     }
                     if (length === 1) gachaCount = 0;
                     updatePityDisplay();
-                } else {
-                    length = Math.floor(Math.random() * 5) + 1;
-                }
+                } else { length = Math.floor(Math.random() * 5) + 1; }
                 let word = ""; for (let i = 0; i < length; i++) word += chars.charAt(Math.floor(Math.random() * chars.length));
                 collectWord(word, false, null, type === 'normal' ? 'normal' : type); saveData();
             }
@@ -654,7 +600,18 @@
 
         function calculatePoints(word, type = 'normal') {
             const len = word.length; let base = 0;
-            if (len === 1) base = 5000; else if (len === 2) base = 2000; else if (len === 3) base = 500; else if (len === 4) base = 100; else base = 10;
+            // 売却時の値段をランダムに設定
+            if (len === 1) {
+                base = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+            } else if (len === 2) {
+                base = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
+            } else if (len === 3) {
+                base = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
+            } else if (len === 4) {
+                base = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
+            } else {
+                base = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+            }
             return (type !== 'normal') ? base * 2 : base;
         }
 
@@ -676,19 +633,13 @@
             return word;
         }
 
-        // --- タップ移動・売却ロジック ---
-        function createBaseSlot(type) {
+        function createBaseSlot() {
             const slot = document.createElement('div'); 
-            slot.className = 'word-slot' + (type === 'dict' ? ' dict-slot' : '');
+            slot.className = 'word-slot';
             slot.onclick = () => {
-                if (activeSelect) {
-                    const targetParent = activeSelect.parentElement;
-                    const existingWord = slot.children[0];
-                    if (existingWord) targetParent.appendChild(existingWord); // 入れ替え
+                if (activeSelect && !slot.children.length) {
                     slot.appendChild(activeSelect);
-                    clearSelection();
-                    updateCount();
-                    saveData();
+                    clearSelection(); updateCount(); saveData();
                 }
             };
             return slot;
@@ -698,42 +649,19 @@
             if (activeSelect) activeSelect.classList.remove('selected');
             activeSelect = null;
             selectedElements = [];
-            combineBtn.style.display = 'none';
+            confirmUI.style.display = 'none';
             document.getElementById('sell-btn-main').style.display = 'none';
-            document.getElementById('sell-btn-dict').style.display = 'none';
-            document.getElementById('return-btn-dict').style.display = 'none';
         }
 
         function sellSelectedWord() {
             if (activeSelect) {
                 totalPoints += parseInt(activeSelect.dataset.points);
                 pointsDisplay.innerText = formatPoints(totalPoints);
-                activeSelect.remove();
-                sellSe.play();
-                clearSelection();
-                updateCount();
-                saveData();
+                activeSelect.remove(); sellSe.play(); clearSelection(); updateCount(); saveData();
             }
         }
 
-        function returnSelectedToMain() {
-            if (activeSelect) {
-                const slots = grid.querySelectorAll('.word-slot');
-                for (let slot of slots) {
-                    if (slot.children.length === 0) {
-                        slot.appendChild(activeSelect);
-                        clearSelection();
-                        updateCount();
-                        saveData();
-                        return;
-                    }
-                }
-                alert("基地がいっぱいです！");
-            }
-        }
-
-        function initSlots() { grid.innerHTML = ''; for (let i = 0; i < maxCapacity; i++) grid.appendChild(createBaseSlot('base')); }
-        function initDictSlots() { dictGrid.innerHTML = ''; for (let i = 0; i < 20; i++) dictGrid.appendChild(createBaseSlot('dict')); }
+        function initSlots() { grid.innerHTML = ''; for (let i = 0; i < maxCapacity; i++) grid.appendChild(createBaseSlot()); }
 
         function createWordObject() {
             const container = document.createElement('div'); container.className = 'word-container';
@@ -766,37 +694,44 @@
             
             item.onclick = (e) => {
                 e.stopPropagation();
-                const isDict = item.closest('#dictionary-grid');
-
                 if (activeSelect === item) {
                     clearSelection();
                 } else if (activeSelect) {
-                    // 他の単語がある枠をタップした場合はcreateBaseSlot側のonclickで入れ替え処理される
+                    selectedElements = [activeSelect, item];
+                    confirmUI.style.display = 'flex';
                 } else {
                     activeSelect = item;
                     item.classList.add('selected');
-                    // 操作ボタン表示
-                    if (isDict) {
-                        document.getElementById('sell-btn-dict').style.display = 'block';
-                        document.getElementById('return-btn-dict').style.display = 'block';
-                    } else {
-                        document.getElementById('sell-btn-main').style.display = 'block';
-                        // 合体選択用ロジックも兼ねる
-                        selectedElements = [{ el: item, text: word, type: type }];
-                    }
+                    document.getElementById('sell-btn-main').style.display = 'block';
                 }
             };
-            
-            // 合体用の2つ目選択(基地のみ)
-            item.addEventListener('click', () => {
-                if (!item.closest('#dictionary-grid') && activeSelect && activeSelect !== item) {
-                    selectedElements = [{el: activeSelect, text: activeSelect.querySelector('.word-text').innerText, type: activeSelect.dataset.type}, {el: item, text: word, type: type}];
-                    combineBtn.style.display = 'block';
-                }
-            });
-
             return item;
         }
+
+        document.getElementById('btn-move').onclick = () => {
+            if(selectedElements.length === 2) {
+                const slot1 = selectedElements[0].parentElement;
+                const slot2 = selectedElements[1].parentElement;
+                slot1.appendChild(selectedElements[1]);
+                slot2.appendChild(selectedElements[0]);
+                clearSelection(); saveData();
+            }
+        };
+
+        document.getElementById('btn-fusion').onclick = () => {
+            if(selectedElements.length === 2) {
+                const text1 = selectedElements[0].querySelector('.word-text').innerText;
+                const text2 = selectedElements[1].querySelector('.word-text').innerText;
+                const type1 = selectedElements[0].dataset.type;
+                const type2 = selectedElements[1].dataset.type;
+                const newWord = text1 + text2;
+                if (newWord.length > 10) { alert("単語が長すぎます！"); return; }
+                
+                selectedElements.forEach(el => el.remove());
+                collectWord(newWord, true, null, type1 !== 'normal' ? type1 : type2);
+                clearSelection(); saveData();
+            }
+        };
 
         function collectWord(word, isFused = false, existingPoints = null, type = 'normal') {
             const points = existingPoints || calculatePoints(word, type);
@@ -806,31 +741,16 @@
             updateCount();
         }
 
-        combineBtn.onclick = () => {
-            if (selectedElements.length === 2) {
-                const newWord = selectedElements[0].text + selectedElements[1].text;
-                if (newWord.length > 10) { alert("単語が長すぎます！"); return; }
-                finishFusion(newWord, selectedElements[0].type !== 'normal' ? selectedElements[0].type : selectedElements[1].type);
-            }
-        };
-
-        function finishFusion(newWord, finalType) {
-            selectedElements.forEach(item => item.el.remove());
-            collectWord(newWord, true, null, finalType);
-            clearSelection(); saveData();
-        }
-
         shopBtn.onclick = () => {
-            if (totalPoints >= 10000 && maxCapacity < 50) {
+            if (totalPoints >= 10000 && maxCapacity < 20) {
                 totalPoints -= 10000; maxCapacity++; pointsDisplay.innerText = formatPoints(totalPoints);
-                grid.appendChild(createBaseSlot('base')); updateCount(); updateShopStatus(); saveData();
+                grid.appendChild(createBaseSlot()); updateCount(); updateShopStatus(); saveData();
             }
         };
 
         function updateShopStatus() {
-            if (maxCapacity >= 50) { shopBtn.innerText = "MAX"; shopBtn.disabled = true; } 
+            if (maxCapacity >= 20) { shopBtn.innerText = "MAX"; shopBtn.disabled = true; } 
             else { shopBtn.disabled = totalPoints < 10000; }
-            updateDictShopStatus();
         }
 
         function updateCount() { countDisplay.innerText = `${grid.querySelectorAll('.collected-word').length} / ${maxCapacity}`; }
@@ -842,7 +762,7 @@
             requestAnimationFrame(updateGame);
         }
 
-        initSlots(); initDictSlots(); loadData(); updateGame(); updateShopStatus();
+        initSlots(); loadData(); updateGame(); updateShopStatus();
     </script>
 </body>
 </html>
